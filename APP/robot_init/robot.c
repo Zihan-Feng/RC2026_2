@@ -8,6 +8,9 @@ void Robot_Init()
 {
     /* 关闭中断，防止在初始化过程中发生中断 */
     __disable_irq();
+
+    DWT_Init(275);
+    SubPub_Init();
     /* 实际应用的can总线初始化 */
     CAN_FILTER_Init(&hfdcan1, FDCAN_STANDARD_ID, 1,FDCAN_FILTER_TO_RXFIFO0,0,0);
     CAN_FILTER_Init(&hfdcan1, FDCAN_EXTENDED_ID, 2,FDCAN_FILTER_TO_RXFIFO1,0,0);

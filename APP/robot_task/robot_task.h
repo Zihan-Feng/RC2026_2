@@ -7,9 +7,10 @@
 #include "cmsis_os.h"
 
 /* bsp 层接口头文件 */
-
+#include "bsp_dwt.h"
 /* app 层接口头文件 一般是extern了任务函数才会在这里include */
 #include "com_config.h"
+#include "debug_task.h"
 
 /* module层接口头文件 */
 
@@ -17,11 +18,13 @@
 extern osThreadId_t CAN1_Send_TaskHandle;
 extern osThreadId_t CAN2_Send_TaskHandle;
 extern osThreadId_t CAN3_Send_TaskHandle;
+extern osThreadId_t Debug_TaskHandle;
 
 /* Definitions for TaskFunc */
 void CAN1_Send_Task(void *argument);
 void CAN2_Send_Task(void *argument);
 void CAN3_Send_Task(void *argument);
+void Debug_Task(void *argument);
 
 static inline void osTaskInit(void)
 {
@@ -45,4 +48,11 @@ static inline void osTaskInit(void)
     .priority = (osPriority_t) osPriorityNormal,
     };
     CAN3_Send_TaskHandle = osThreadNew(CAN3_Send_Task, NULL, &CAN3_SendTaskHandle_attributes);
+
+    const osThreadAttr_t DebugTaskHandle_attributes = {
+    .name = "Debug_TaskHandle",
+    .stack_size = 256*4 ,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+    Debug_TaskHandle = osThreadNew(Debug_Task, NULL, &DebugTaskHandle_attributes);
 }

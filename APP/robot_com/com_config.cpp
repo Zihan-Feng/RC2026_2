@@ -1,5 +1,18 @@
 #include "com_config.h"
 
+#include "topics.h"
+#include <string.h>
+
+typedef struct
+{
+    float yaw;
+    float pitch;
+    float roll;
+} imu_msg_t;
+
+static Subscriber *imu_sub = NULL;
+static imu_msg_t imu_local;
+
 osThreadId_t CAN1_Send_TaskHandle;
 osThreadId_t CAN2_Send_TaskHandle;
 osThreadId_t CAN3_Send_TaskHandle;
@@ -136,7 +149,18 @@ void CAN2_Send_Task(void *argument) {
 
     FDCAN_TxFrame_TypeDef temp_can_txmsg;
     uint8_t free_can_mailbox;
+    imu_sub = register_sub("imu_attitude", 4);
     for (;;){
+        publish_data rx = imu_sub->get_data(imu_sub);
+        if (rx.len == sizeof(imu_msg_t) && rx.data != NULL)
+        {
+            memcpy(&imu_local, rx.data, sizeof(imu_msg_t));
+            // imu_local 里就是最新一帧
+        }
+        else if (rx.len == -1)
+        {
+            // 当前没有新数据
+        }
         if (xQueueReceive(CAN2_TxPort, &temp_can_txmsg, 0) == pdTRUE) {
         do {
         free_can_mailbox = HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2);

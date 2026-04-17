@@ -10,6 +10,7 @@ extern "C"{
 #include "queue.h"
 #include "cmsis_os.h"
 #include "bsp_can.h"
+#include "bsp_dwt.h"
 
 /*------------------------------------extern------------------------------------*/
 
