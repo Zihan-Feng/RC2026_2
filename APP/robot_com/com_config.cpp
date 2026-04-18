@@ -1,189 +1,103 @@
 #include "com_config.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-#include "topics.h"
-#include <string.h>
-
-typedef struct
-{
-    float yaw;
-    float pitch;
-    float roll;
-} imu_msg_t;
-
-static Subscriber *imu_sub = NULL;
-static imu_msg_t imu_local;
+#include "Canbus.hpp"
+#include "Motor.hpp"
+#include <cstdint>
 
 osThreadId_t CAN1_Send_TaskHandle;
 osThreadId_t CAN2_Send_TaskHandle;
 osThreadId_t CAN3_Send_TaskHandle;
 
-QueueHandle_t CAN1_TxPort;
-QueueHandle_t CAN2_TxPort;
-QueueHandle_t CAN3_TxPort;
+extern FDCAN_HandleTypeDef hfdcan1;
+extern FDCAN_HandleTypeDef hfdcan2;
+extern FDCAN_HandleTypeDef hfdcan3;
 
+CanBus fdcan1_bus(hfdcan1);
+CanBus fdcan2_bus(hfdcan2);
+CanBus fdcan3_bus(hfdcan3);
 
-uint8_t Common_Service_Init()
-{
-    CAN1_TxPort = xQueueCreate(CAN1_TX_QUEUE_SIZE, sizeof(FDCAN_TxFrame_TypeDef));
-    CAN2_TxPort = xQueueCreate(CAN2_TX_QUEUE_SIZE, sizeof(FDCAN_TxFrame_TypeDef));
-    CAN3_TxPort = xQueueCreate(CAN3_TX_QUEUE_SIZE, sizeof(FDCAN_TxFrame_TypeDef));
+// can设备
 
-    if ((CAN1_TxPort == NULL) || (CAN2_TxPort == NULL) || (CAN3_TxPort == NULL))
-    {
-        return 1;
-    }
+// 底盘电机
+// C620Motor chassis_motor1(&fdcan2_bus, 0x201, 0, 0x200, 0);
+// C620Motor chassis_motor2(&fdcan2_bus, 0x202, 0, 0x200, 0);
+// C620Motor chassis_motor3(&fdcan2_bus, 0x203, 0, 0x200, 0);
+// C620Motor chassis_motor4(&fdcan2_bus, 0x204, 0, 0x200, 0);
 
-    return 0;
+//
+C610Motor arm2006_motor(&fdcan2_bus, 0x201, 0, 0x200, 0);
+C620Motor arm3508_motor(&fdcan2_bus, 0x203, 0, 0x200, 0);
+
+uint8_t comServiceInit() {
+  // can外设初始化
+  canFilterInit(&hfdcan2, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO0, 0, 0);
+  canFilterInit(&hfdcan2, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO1, 0, 0);
+  bspCanInit(&hfdcan2);
+  canFilterInit(&hfdcan3, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO0, 0, 0);
+  canFilterInit(&hfdcan3, FDCAN_STANDARD_ID, FDCAN_FILTER_TO_RXFIFO1, 0, 0);
+  bspCanInit(&hfdcan3);
+
+  // can 总线初始化
+  fdcan1_bus.init();
+  fdcan2_bus.init();
+  fdcan3_bus.init();
+
+  // chassis_motor1.init();
+  // chassis_motor2.init();
+  // chassis_motor3.init();
+  // chassis_motor4.init();
+
+  arm2006_motor.init();
+  arm3508_motor.init();
+
+  // fdcan2_bus.registerDevice(&chassis_motor1);
+  // fdcan2_bus.registerDevice(&chassis_motor2);
+  // fdcan2_bus.registerDevice(&chassis_motor3);
+  // fdcan2_bus.registerDevice(&chassis_motor4);
+  fdcan2_bus.registerDevice(&arm2006_motor);
+  fdcan2_bus.registerDevice(&arm3508_motor);
+
+  return 0;
 }
 
-void CAN1_Rx_Callback(FDCAN_RxFrame_TypeDef *can_instance)
-{
-    if (can_instance->Header.IdType == FDCAN_STANDARD_ID)
-    {
-        /* 标准帧接收处理 */
-        switch (can_instance->Header.Identifier)
-        {
-        case 0x201: {
-            
-            break;
-        }
-        case 0x202: {
-            
-        }
-        case 0x203: {
-            
-        }
-        case 0x204: {
-            
-        }
-        
-        default:
-            break;
-        }
-    }
-    else if (can_instance->Header.IdType == FDCAN_EXTENDED_ID)
-    {
-        /* 扩展帧接收处理 */
-    }
-}
-void CAN2_Rx_Callback(FDCAN_RxFrame_TypeDef *can_instance)
-{
-    if (can_instance->Header.IdType == FDCAN_STANDARD_ID)
-    {
-        /* 标准帧接收处理 */
-        switch (can_instance->Header.Identifier)
-        {
-        case 0x201: {
-            
-            break;
-        }
-        case 0x202: {
-            
-        }
-        case 0x203: {
-            
-        }
-        case 0x204: {
-            
-        }
-        
-        default:
-            break;
-        }
+void can1SendTask(void *argument) {
+  TickType_t currentTime = xTaskGetTickCount();
 
-    }
-    else if (can_instance->Header.IdType == FDCAN_EXTENDED_ID)
-    {
-        /* 扩展帧接收处理 */
-    }
-}
-void CAN3_Rx_Callback(FDCAN_RxFrame_TypeDef *can_instance)
-{
-    if (can_instance->Header.IdType == FDCAN_STANDARD_ID)
-    {
-        /* 标准帧接收处理 */
-        switch (can_instance->Header.Identifier)
-        {
-        case 0x201: {
+  for (;;) {
 
-            break;
-        }
-        case 0x202: {
-
-        }
-        case 0x203: {
-
-        }
-        case 0x204: {
-
-        }
-
-        default:
-            break;
-        }
-    }
-    else if (can_instance->Header.IdType == FDCAN_EXTENDED_ID)
-    {
-        /* 扩展帧接收处理 */
-    }
+    vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
+  }
 }
 
- void CAN1_Send_Task(void *argument) {
-    portTickType currentTime = xTaskGetTickCount();
+void can2SendTask(void *argument) {
+  TickType_t currentTime = xTaskGetTickCount();
+  CanBus::ClassicPack pack;
+  pack.type = CanBus::Type::STANDARD;
+  pack.id = 0x200; // DJI Group 2
 
-    FDCAN_TxFrame_TypeDef temp_can_txmsg;
-    uint8_t free_can_mailbox;
-    for (;;){
-        if (xQueueReceive(CAN1_TxPort, &temp_can_txmsg, 0) == pdTRUE) {
-        do {
-        free_can_mailbox = HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1);
-      } while (free_can_mailbox == 0);
-        CAN_Transmit(&temp_can_txmsg); 
-        } 
-        vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
-    }
+  uint8_t len = 8;
+  for (;;) {
+    // 调用方负责保证 motor_count 和 motor_ids/commands 数组对应
+    // 如果需要聚合多个电机到 0x200 帧：
+    uint32_t motor_ids[] = {arm3508_motor.id(), arm2006_motor.id()};
+    int16_t commands[] = {static_cast<int16_t>(arm3508_motor.cmdTrans()),
+                          static_cast<int16_t>(arm2006_motor.cmdTrans())};
+    packDJIMotorCanMsg(0x200, motor_ids, commands, 2, pack.data, len);
+    arm3508_motor.manager_->addCanMsg(pack);
+    //
+    // 对于当前代码（arm2006_motor, arm3508_motor），需要逐个构建帧
+    // 或者如果需要聚合，调用方提前提取 ID 和命令值
+
+    vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
+  }
 }
 
-void CAN2_Send_Task(void *argument) {
-    portTickType currentTime = xTaskGetTickCount();
+void can3SendTask(void *argument) {
+  TickType_t currentTime = xTaskGetTickCount();
+  for (;;) {
 
-    FDCAN_TxFrame_TypeDef temp_can_txmsg;
-    uint8_t free_can_mailbox;
-    imu_sub = register_sub("imu_attitude", 4);
-    for (;;){
-        publish_data rx = imu_sub->get_data(imu_sub);
-        if (rx.len == sizeof(imu_msg_t) && rx.data != NULL)
-        {
-            memcpy(&imu_local, rx.data, sizeof(imu_msg_t));
-            // imu_local 里就是最新一帧
-        }
-        else if (rx.len == -1)
-        {
-            // 当前没有新数据
-        }
-        if (xQueueReceive(CAN2_TxPort, &temp_can_txmsg, 0) == pdTRUE) {
-        do {
-        free_can_mailbox = HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2);
-      } while (free_can_mailbox == 0);
-        CAN_Transmit(&temp_can_txmsg); 
-        } 
-        vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
-    }
+    vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
+  }
 }
-
-void CAN3_Send_Task(void *argument) {
-    portTickType currentTime = xTaskGetTickCount();
-
-    FDCAN_TxFrame_TypeDef temp_can_txmsg;
-    uint8_t free_can_mailbox;
-    for (;;){
-        if (xQueueReceive(CAN3_TxPort, &temp_can_txmsg, 0) == pdTRUE) {
-        do {
-        free_can_mailbox = HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan3);
-      } while (free_can_mailbox == 0);
-        CAN_Transmit(&temp_can_txmsg); 
-        } 
-        vTaskDelayUntil(&currentTime, 1); // 每1ms执行一次发送任务
-    }
-}
-

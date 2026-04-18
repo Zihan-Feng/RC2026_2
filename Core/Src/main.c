@@ -21,6 +21,7 @@
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "fdcan.h"
+#include "tim.h"
 #include "usb_device.h"
 #include "gpio.h"
 
@@ -98,13 +99,14 @@ int main(void)
   MX_FDCAN1_Init();
   MX_FDCAN2_Init();
   MX_FDCAN3_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   Robot_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
