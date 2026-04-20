@@ -133,12 +133,11 @@ public:
     raw_speed_ = static_cast<float>(raw_speed) * RPM_2_RAD_PER_SEC;
     speed_ = raw_speed_ / reduction_ratio_;
 
-    // byte 4-5: 实际电流 (int16, 单位: 0.1A, 范围 -2000~2000 = -200~200A)
+    // byte 4-5: 实际电流 (int16, 单位: mA)
     // 电流(A) = value * 0.1
     int16_t raw_current = (int16_t)((data[4] << 8) | data[5]);
-    raw_torque_ = static_cast<float>(raw_current) * 0.1f;          // A
-    torque_ = raw_torque_ * current_to_torque_ * reduction_ratio_; // 输出端力矩
-
+    raw_torque_ = static_cast<float>(raw_current) * current_to_torque_;
+    torque_ = raw_torque_ * reduction_ratio_; // 输出端力矩
     // byte 6: 电机温度 (uint8, 单位: °C)
     temperature_ = static_cast<float>(data[6]);
   }
@@ -164,7 +163,7 @@ private:
   float encoder_angle_ratio_ = 8192.0f / 360.0f;
 
   // 电流转力矩
-  float current_to_torque_{0.0f}; // M3508: 0.2 Nm/A
+  float current_to_torque_{0.00018f}; // M2006: 0.00018 转子扭矩（0.18/1000）
 };
 
 class C620Motor : public CanDevice, public MotorBase {
@@ -218,14 +217,14 @@ public:
     // byte 4-5: 实际电流
     // 电流(A) = value * 0.1
     int16_t raw_current = (int16_t)((data[4] << 8) | data[5]);
-    raw_torque_ = static_cast<float>(raw_current);                 // A
-    torque_ = raw_torque_ * current_to_torque_ * reduction_ratio_; // 输出端力矩
+    raw_torque_ = static_cast<float>(raw_current) * current_to_torque_; // A
+    torque_ = raw_torque_ * reduction_ratio_; // 输出端力矩
 
     // byte 6: 电机温度 (uint8, 单位: °C)
     temperature_ = static_cast<float>(data[6]);
   }
 
-  float cmdTrans() { return cmd_ * (16384.f / 20000.0f); }
+  float cmdTrans() { return cmd_ * 16384.f / 20000.0f; }
 
   bool buildTx(uint8_t data[8], uint8_t &len) override {
     // C610 不单独发帧，返回 false
@@ -243,7 +242,7 @@ private:
   float encoder_angle_ratio_ = 8192.0f / 360.0f;
 
   // 电流转力矩
-  float current_to_torque_{0.0f}; // M2006: 0.2 Nm/A
+  float current_to_torque_{0.0003f}; // M3508: 0.3Nm/A
 };
 
 class GM6020Motor : public CanDevice, public MotorBase {

@@ -2,7 +2,6 @@
 #include "Canbus.hpp"
 #include "com_config.h"
 #include "robot_task.h"
-#include "topics.h"
 
 /* 更多特色功能可以在这里通过宏开关来决定是否使用 */
 
@@ -16,9 +15,6 @@ void Robot_Init() {
   if (comServiceInit() != 0) {
     Error_Handler();
   }
-
-  // 消息订阅系统初始化
-  SubPub_Init();
 
   /* freertos任务调度初始化 */
   osTaskInit();

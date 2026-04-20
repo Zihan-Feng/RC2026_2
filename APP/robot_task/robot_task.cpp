@@ -2,6 +2,7 @@
 /* RTOS层及mcu main接口 */
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "main.h"
 #include "task.h"
 
@@ -18,9 +19,11 @@
 extern osThreadId_t CAN1_Send_TaskHandle;
 extern osThreadId_t CAN2_Send_TaskHandle;
 extern osThreadId_t CAN3_Send_TaskHandle;
+extern osThreadId_t uart3ProcessTaskHandle;
 extern osThreadId_t Debug_TaskHandle;
 extern osThreadId_t ChassisTaskHandle;
 extern osThreadId_t ControlTaskHandle;
+extern osThreadId_t usbcdcProcessTaskHandle;
 
 void osTaskInit(void) {
   const osThreadAttr_t CAN1_SendTaskHandle_attributes = {
@@ -69,4 +72,20 @@ void osTaskInit(void) {
   };
   ControlTaskHandle =
       osThreadNew(controlTask, NULL, &ControlTaskHandle_attributes);
+
+  const osThreadAttr_t Uart3ProcessTaskHandle_attributes = {
+      .name = "Uart3Process_TaskHandle",
+      .stack_size = 256 * 4,
+      .priority = (osPriority_t)osPriorityNormal1,
+  };
+  uart3ProcessTaskHandle =
+      osThreadNew(uart3RxProcessTask, NULL, &Uart3ProcessTaskHandle_attributes);
+
+  const osThreadAttr_t UsbcdcProcessTaskHandle_attributes = {
+      .name = "UsbcdcProcess_TaskHandle",
+      .stack_size = 256 * 4,
+      .priority = (osPriority_t)osPriorityNormal1,
+  };
+  usbcdcProcessTaskHandle =
+      osThreadNew(usbCdcProcessTask, NULL, &UsbcdcProcessTaskHandle_attributes);
 }

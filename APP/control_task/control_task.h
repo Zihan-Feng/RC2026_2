@@ -16,7 +16,6 @@
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "task.h"
-#include "topics.h"
 
 void controlInit();
 

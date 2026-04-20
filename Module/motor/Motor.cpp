@@ -42,28 +42,29 @@ void packDJIMotorCanMsg(uint32_t tx_id, const uint32_t motor_ids[],
     data[i] = 0;
   }
 
+  // Bit i indicates whether slot i (0..3) has been filled in this frame.
+  uint8_t occupied_slots = 0;
+
   for (uint8_t i = 0; i < motor_count; ++i) {
     if (motor_ids[i] == 0) {
       continue;
     }
 
-    int8_t slot = -1;
-    if (tx_id == 0x200) {
-      if (motor_ids[i] >= 0x201 && motor_ids[i] <= 0x204) {
-        slot = static_cast<int8_t>(motor_ids[i] - 0x201);
-      }
-    } else if (tx_id == 0x1FF) {
-      if (motor_ids[i] >= 0x205 && motor_ids[i] <= 0x208) {
-        slot = static_cast<int8_t>(motor_ids[i] - 0x205);
-      }
-    }
+    const int8_t slot = djiSlotFromIds(tx_id, motor_ids[i]);
 
     if (slot < 0 || slot > 3) {
+      continue;
+    }
+
+    const uint8_t slot_mask =
+        static_cast<uint8_t>(1U << static_cast<uint8_t>(slot));
+    if ((occupied_slots & slot_mask) != 0U) {
       continue;
     }
 
     const int16_t cmd = commands[i];
     data[slot * 2] = static_cast<uint8_t>(cmd >> 8);
     data[slot * 2 + 1] = static_cast<uint8_t>(cmd & 0xFF);
+    occupied_slots |= slot_mask;
   }
 }

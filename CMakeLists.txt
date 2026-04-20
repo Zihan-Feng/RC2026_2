@@ -80,6 +80,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Module/controller
     ${CMAKE_SOURCE_DIR}/Module/motor
     ${CMAKE_SOURCE_DIR}/Module/topics
+    ${CMAKE_SOURCE_DIR}/Module/servo
+    ${CMAKE_SOURCE_DIR}/Module/xbox
+    ${CMAKE_SOURCE_DIR}/Module/pc
 
     # Add user defined include paths
 )

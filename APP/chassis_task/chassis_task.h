@@ -18,6 +18,5 @@
 #include "cmsis_os.h"
 
 #include "task.h"
-#include "topics.h"
 
 void chassisTask(void *argument);
