@@ -1,1 +1,5 @@
 MDK-ARM
+build
+.clangd
+.vscode
+.settings

@@ -1,7 +1,7 @@
 /**
- * @file robot_task.h
+ * @file chassis_task.h
  * @author Keten (2863861004@qq.com)
- * @brief 任务管理和任务间通讯
+ * @brief
  * @version 0.1
  * @date 2026-04-18
  *
@@ -11,6 +11,12 @@
  * @note :
  * @versioninfo :
  */
+
 #pragma once
 
-void osTaskInit(void);
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
+
+#include "task.h"
+
+void chassisTask(void *argument);

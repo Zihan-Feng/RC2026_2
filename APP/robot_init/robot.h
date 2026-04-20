@@ -1,16 +1,10 @@
-#ifndef ROBOT_H 
-#define ROBOT_H 
-
-#ifdef __cplusplus
-extern "C"{
-#endif
+#ifndef ROBOT_H
+#define ROBOT_H
 
 /*----------------------------------include-----------------------------------*/
-#include "com_config.h"
-#include "bsp_can.h"
 #include "bsp_dwt.h"
-#include "robot_task.h"
-#include "topics.h"
+
+#include "stm32h7xx_hal.h"
 /*-----------------------------------macro------------------------------------*/
 
 /*----------------------------------typedef-----------------------------------*/
@@ -18,10 +12,15 @@ extern "C"{
 /*----------------------------------variable----------------------------------*/
 
 /*----------------------------------function----------------------------------*/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Robot_Init();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* ROBOT_H */
+#endif /* ROBOT_H */

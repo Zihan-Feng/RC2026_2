@@ -1,34 +1,36 @@
 #include "debug_task.h"
-#include "topics.h"
+#include "Motor.hpp"
+#include "topics.hpp"
+
+#include "task.h"
+
+#include "com_config.h"
+#include "pid_controller.h"
 
 osThreadId_t Debug_TaskHandle;
 
-typedef struct
-{
-    float yaw;
-    float pitch;
-    float roll;
-} imu_msg_t;
+extern C620Motor arm3508_motor;
 
-static Publisher *imu_pub = NULL;
-static imu_msg_t imu_msg;   // 建议静态或长期有效内存
+// pid结构体
+PID_t motor_pid = {
+    .Kp = 1.0, .Ki = 0.0, .Kd = 0.0, .MaxOut = 20000, .Improve = NONE};
 
-void Debug_Task(void *argument) {
-  portTickType currentTime;
+float target_speed = 0.0f;
+float output = 0.0f;
+
+static inline void debugInit(void) {
+  // pid初始化
+  PID_Init(&motor_pid);
+}
+
+void debugTask(void *argument) {
+  TickType_t currentTime;
   currentTime = xTaskGetTickCount();
-  imu_pub = register_pub("imu_attitude");
-  publish_data msg;
   for (;;) {
-    imu_msg.yaw += 1.0f;
-    imu_msg.pitch += 2.0f;
-    imu_msg.roll += 3.0f;
-
-    msg.data = (uint8_t *)&imu_msg;
-    msg.len = sizeof(imu_msg_t);
-
-    imu_pub->publish(imu_pub, msg);
+    output = PID_Calculate(&motor_pid, arm3508_motor.getCurrentSpeed(),
+                           target_speed);
+    arm3508_motor.setMotorCmd(output);
 
     vTaskDelayUntil(&currentTime, 5);
-    // vTaskDelay(5);
   }
 }
